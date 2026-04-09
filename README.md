@@ -23,12 +23,6 @@ The app combines multiple techniques — **Isolation Forest for anomaly detectio
 
 ---
 
-## 📸 Preview
-
-![Dashboard Preview](https://raw.githubusercontent.com/Priyanshuu2008/personal-finance-advisor/main/assets/dashboard.png)
-
----
-
 ## ✨ Features
 
 | Feature | Description |
