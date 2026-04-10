@@ -11,7 +11,7 @@ import numpy as np
 load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-st.set_page_config(page_title="Finance Advisor", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Finance Advisor", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
@@ -30,8 +30,6 @@ st.markdown("""
         background-color: white !important;
         border-radius: 6px !important;
     }
-    section[data-testid="stSidebar"] .stNumberInput > label { color: white !important; }
-    section[data-testid="stSidebar"] .stTextInput > label { color: white !important; }
     section[data-testid="stSidebar"] p { color: white !important; }
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
@@ -39,7 +37,6 @@ st.markdown("""
     section[data-testid="stSidebar"] h4 { color: white !important; }
     section[data-testid="stSidebar"] small { color: #adb5bd !important; }
     section[data-testid="stSidebar"] span { color: white !important; }
-    section[data-testid="stSidebar"] button { color: white !important; }
 
     [data-testid="stMetric"] {
         background-color: white !important;
@@ -80,42 +77,41 @@ PLOT_LAYOUT = dict(
 )
 
 # ==================== SIDEBAR ====================
-with st.sidebar:
-    st.markdown("## Finance Advisor")
-    st.markdown("---")
-    page = st.radio("Navigation", ["Dashboard", "Expense Tracker", "AI Advisor", "Anomaly Detection", "Budget Predictor"], label_visibility="collapsed")
-    st.markdown("---")
+st.sidebar.title("Finance Advisor")
+st.sidebar.markdown("---")
+page = st.sidebar.radio("Go to", ["Dashboard", "Expense Tracker", "AI Advisor", "Anomaly Detection", "Budget Predictor"])
+st.sidebar.markdown("---")
 
-    st.markdown("### Your Monthly Data")
-    user_name = st.text_input("Your Name", value="User")
-    income = st.number_input("Monthly Income (₹)", min_value=0, value=75000, step=1000)
+st.sidebar.markdown("### Your Monthly Data")
+user_name = st.sidebar.text_input("Your Name", value="User")
+income = st.sidebar.number_input("Monthly Income (₹)", min_value=0, value=75000, step=1000)
 
-    st.markdown("**Budget & Spent (₹)**")
+st.sidebar.markdown("**Budget & Spent (₹)**")
 
-    categories = ["Rent", "Groceries", "EMI", "Travel & Commute", "Dining Out",
-                  "Electricity & Bills", "Mobile & Internet", "Medical",
-                  "Entertainment", "Shopping", "Education", "Savings"]
+categories = ["Rent", "Groceries", "EMI", "Travel & Commute", "Dining Out",
+              "Electricity & Bills", "Mobile & Internet", "Medical",
+              "Entertainment", "Shopping", "Education", "Savings"]
 
-    default_budget = [15000, 8000, 12000, 4000, 3000, 2500, 1000, 2000, 2000, 5000, 3000, 10000]
-    default_spent =  [15000, 7200, 12000, 4800, 4200, 2500,  999, 1500, 3200, 6500, 3000,  8000]
+default_budget = [15000, 8000, 12000, 4000, 3000, 2500, 1000, 2000, 2000, 5000, 3000, 10000]
+default_spent  = [15000, 7200, 12000, 4800, 4200, 2500,  999, 1500, 3200, 6500, 3000,  8000]
 
-    budget_vals = []
-    spent_vals = []
+budget_vals = []
+spent_vals = []
 
-    for i, cat in enumerate(categories):
-        st.markdown(f"**{cat}**")
-        col1, col2 = st.columns(2)
-        with col1:
-            b = st.number_input("Budget", min_value=0, value=default_budget[i], step=500, key=f"budget_{i}", label_visibility="collapsed")
-        with col2:
-            s = st.number_input("Spent", min_value=0, value=default_spent[i], step=500, key=f"spent_{i}", label_visibility="collapsed")
-        budget_vals.append(b)
-        spent_vals.append(s)
+for i, cat in enumerate(categories):
+    st.sidebar.markdown(f"**{cat}**")
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        b = st.number_input("Budget", min_value=0, value=default_budget[i], step=500, key=f"budget_{i}", label_visibility="collapsed")
+    with col2:
+        s = st.number_input("Spent", min_value=0, value=default_spent[i], step=500, key=f"spent_{i}", label_visibility="collapsed")
+    budget_vals.append(b)
+    spent_vals.append(s)
 
-    st.markdown("---")
-    st.caption("Powered by Gemini + Scikit-learn")
+st.sidebar.markdown("---")
+st.sidebar.caption("Powered by Gemini + Scikit-learn")
 
-# Build DataFrame from user inputs
+# Build DataFrame
 data = {
     'Category': categories,
     'Budget': budget_vals,
