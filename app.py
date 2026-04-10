@@ -16,6 +16,7 @@ st.set_page_config(page_title="Finance Advisor", layout="wide", initial_sidebar_
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
     * { font-family: 'Segoe UI', sans-serif !important; }
     [data-testid="stAppViewContainer"], .main, .block-container {
         background-color: #f5f7fa !important;
