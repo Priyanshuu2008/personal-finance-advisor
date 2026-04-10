@@ -22,8 +22,25 @@ st.markdown("""
     }
     [data-testid="stHeader"] { background-color: #f5f7fa !important; }
     .block-container { padding: 2rem 3rem !important; }
+
     section[data-testid="stSidebar"] { background-color: #1e2240 !important; }
     section[data-testid="stSidebar"] * { color: white !important; }
+    section[data-testid="stSidebar"] input {
+        color: #111827 !important;
+        background-color: white !important;
+        border-radius: 6px !important;
+    }
+    section[data-testid="stSidebar"] .stNumberInput > label { color: white !important; }
+    section[data-testid="stSidebar"] .stTextInput > label { color: white !important; }
+    section[data-testid="stSidebar"] p { color: white !important; }
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] h4 { color: white !important; }
+    section[data-testid="stSidebar"] small { color: #adb5bd !important; }
+    section[data-testid="stSidebar"] span { color: white !important; }
+    section[data-testid="stSidebar"] button { color: white !important; }
+
     [data-testid="stMetric"] {
         background-color: white !important;
         border-radius: 14px !important;
@@ -45,25 +62,15 @@ st.markdown("""
         background-color: white !important;
         color: #111827 !important;
     }
+    .stNumberInput > div > div > input {
+        border-radius: 8px !important;
+        border: 1px solid #d1d5db !important;
+        background-color: white !important;
+        color: #111827 !important;
+    }
     #MainMenu, footer { visibility: hidden !important; }
 </style>
 """, unsafe_allow_html=True)
-
-data = {
-    'Category': ['Rent', 'Groceries', 'EMI', 'Travel & Commute', 'Dining Out',
-                 'Electricity & Bills', 'Mobile & Internet', 'Medical',
-                 'Entertainment', 'Shopping', 'Education', 'Savings'],
-    'Budget': [15000, 8000, 12000, 4000, 3000, 2500, 1000, 2000, 2000, 5000, 3000, 10000],
-    'Spent':  [15000, 7200, 12000, 4800, 4200, 2500,  999, 1500, 3200, 6500, 3000,  8000]
-}
-df = pd.DataFrame(data)
-df['Remaining'] = df['Budget'] - df['Spent']
-df['Status'] = df['Remaining'].apply(lambda x: 'Over Budget' if x < 0 else 'On Track')
-
-total_budget = df['Budget'].sum()
-total_spent = df['Spent'].sum()
-total_savings = 8000
-income = 75000
 
 PLOT_LAYOUT = dict(
     paper_bgcolor='white',
@@ -72,23 +79,67 @@ PLOT_LAYOUT = dict(
     margin=dict(t=40, b=120, l=40, r=40)
 )
 
+# ==================== SIDEBAR ====================
 with st.sidebar:
     st.markdown("## Finance Advisor")
     st.markdown("---")
     page = st.radio("Navigation", ["Dashboard", "Expense Tracker", "AI Advisor", "Anomaly Detection", "Budget Predictor"], label_visibility="collapsed")
     st.markdown("---")
+
+    st.markdown("### Your Monthly Data")
+    user_name = st.text_input("Your Name", value="User")
+    income = st.number_input("Monthly Income (₹)", min_value=0, value=75000, step=1000)
+
+    st.markdown("**Budget & Spent (₹)**")
+
+    categories = ["Rent", "Groceries", "EMI", "Travel & Commute", "Dining Out",
+                  "Electricity & Bills", "Mobile & Internet", "Medical",
+                  "Entertainment", "Shopping", "Education", "Savings"]
+
+    default_budget = [15000, 8000, 12000, 4000, 3000, 2500, 1000, 2000, 2000, 5000, 3000, 10000]
+    default_spent =  [15000, 7200, 12000, 4800, 4200, 2500,  999, 1500, 3200, 6500, 3000,  8000]
+
+    budget_vals = []
+    spent_vals = []
+
+    for i, cat in enumerate(categories):
+        st.markdown(f"**{cat}**")
+        col1, col2 = st.columns(2)
+        with col1:
+            b = st.number_input("Budget", min_value=0, value=default_budget[i], step=500, key=f"budget_{i}", label_visibility="collapsed")
+        with col2:
+            s = st.number_input("Spent", min_value=0, value=default_spent[i], step=500, key=f"spent_{i}", label_visibility="collapsed")
+        budget_vals.append(b)
+        spent_vals.append(s)
+
+    st.markdown("---")
     st.caption("Powered by Gemini + Scikit-learn")
 
+# Build DataFrame from user inputs
+data = {
+    'Category': categories,
+    'Budget': budget_vals,
+    'Spent': spent_vals
+}
+df = pd.DataFrame(data)
+df['Remaining'] = df['Budget'] - df['Spent']
+df['Status'] = df['Remaining'].apply(lambda x: 'Over Budget' if x < 0 else 'On Track')
+
+total_budget = df['Budget'].sum()
+total_spent = df['Spent'].sum()
+total_savings = df[df['Category'] == 'Savings']['Spent'].values[0] if 'Savings' in df['Category'].values else 0
+
+# ==================== DASHBOARD ====================
 if page == "Dashboard":
-    st.title("Welcome, Priyanshu")
-    st.caption("Here's your financial overview for April 2026")
+    st.title(f"Welcome, {user_name}")
+    st.caption("Here's your financial overview for this month")
     st.markdown("---")
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Monthly Income", f"₹{income:,}")
     col2.metric("Total Spent", f"₹{total_spent:,}", delta=f"₹{income - total_spent:,} remaining")
     col3.metric("Total Savings", f"₹{total_savings:,}")
-    col4.metric("Savings Rate", f"{(total_savings/income*100):.0f}%")
+    col4.metric("Savings Rate", f"{(total_savings/income*100):.0f}%" if income > 0 else "0%")
 
     st.markdown("---")
 
@@ -121,8 +172,9 @@ if page == "Dashboard":
     over = df[df['Status'] == 'Over Budget']
     if len(over) > 0:
         st.error(f"Overspending Alert: You exceeded budget in — {', '.join(over['Category'].tolist())}")
-    st.success("Savings Tip: Reduce Dining Out and Shopping to save more this month.")
+    st.success("Savings Tip: Reduce spending in over-budget categories to save more this month.")
 
+# ==================== EXPENSE TRACKER ====================
 elif page == "Expense Tracker":
     st.title("Expense Tracker")
     st.caption("Track your monthly transactions and spending patterns.")
@@ -130,15 +182,6 @@ elif page == "Expense Tracker":
 
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("#### Recent Transactions")
-        transactions = pd.DataFrame({
-            'Category': ['Groceries', 'Rent', 'Uber Ride', 'Dining Out', 'EMI', 'Electricity'],
-            'Amount':   ['₹7,200', '₹15,000', '₹850', '₹4,200', '₹12,000', '₹2,500'],
-            'Date':     ['Apr 8', 'Apr 1', 'Apr 7', 'Apr 6', 'Apr 5', 'Apr 3']
-        })
-        st.dataframe(transactions, use_container_width=True, hide_index=True)
-
-    with col2:
         st.markdown("#### Spending by Category")
         fig = px.bar(df, x='Spent', y='Category', orientation='h',
                     color='Status',
@@ -146,11 +189,12 @@ elif page == "Expense Tracker":
         fig.update_layout(yaxis=dict(tickfont=dict(size=10)), **PLOT_LAYOUT)
         st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("---")
-    st.markdown("#### Budget Overview")
-    st.dataframe(df[['Category', 'Budget', 'Spent', 'Remaining', 'Status']],
-                use_container_width=True, hide_index=True)
+    with col2:
+        st.markdown("#### Budget Overview")
+        st.dataframe(df[['Category', 'Budget', 'Spent', 'Remaining', 'Status']],
+                    use_container_width=True, hide_index=True)
 
+# ==================== AI ADVISOR ====================
 elif page == "AI Advisor":
     st.title("AI Financial Advisor")
     st.caption("Ask anything about your finances — get personalized, data-driven advice.")
@@ -166,7 +210,7 @@ elif page == "AI Advisor":
                 try:
                     model = genai.GenerativeModel('gemini-2.0-flash')
                     prompt = f"""
-User monthly budget data (Indian salaried employee, monthly income 75000 rupees):
+User monthly budget data (Indian salaried employee, monthly income {income} rupees):
 {budget_summary}
 
 User question: {user_question}
@@ -182,6 +226,7 @@ No Hindi or Hinglish. Use bullet points. Use the rupee symbol for currency amoun
         else:
             st.warning("Please enter a question first.")
 
+# ==================== ANOMALY DETECTION ====================
 elif page == "Anomaly Detection":
     st.title("Anomaly Detection")
     st.caption("Machine learning flags unusual spending patterns in your budget.")
@@ -214,6 +259,7 @@ elif page == "Anomaly Detection":
         st.dataframe(anomalies[['Category', 'Spent', 'ML Status']],
                     use_container_width=True, hide_index=True)
 
+# ==================== BUDGET PREDICTOR ====================
 elif page == "Budget Predictor":
     st.title("Budget Predictor")
     st.caption("Estimated spending for next month based on current patterns.")
@@ -241,10 +287,11 @@ elif page == "Budget Predictor":
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("**Suggestions:**")
-    st.success("Keep Groceries under ₹8,000")
-    st.warning("Limit Dining Out to ₹2,500")
-    st.success("Boost Savings to ₹12,000")
+    over_budget = df[df['Status'] == 'Over Budget']['Category'].tolist()
+    if over_budget:
+        for cat in over_budget:
+            st.warning(f"Limit {cat} spending to stay within budget.")
+    st.success(f"Try to save at least ₹{int(income * 0.2):,} next month (20% of income).")
 
     st.markdown("**Detailed Breakdown:**")
     st.dataframe(df[['Category', 'Budget', 'Spent', 'Predicted']],
