@@ -75,7 +75,7 @@ PLOT_LAYOUT = dict(
 with st.sidebar:
     st.markdown("## Finance Advisor")
     st.markdown("---")
-    page = st.radio("", ["Dashboard", "Expense Tracker", "AI Advisor", "Anomaly Detection", "Budget Predictor"])
+    page = st.radio("Navigation", ["Dashboard", "Expense Tracker", "AI Advisor", "Anomaly Detection", "Budget Predictor"], label_visibility="collapsed")
     st.markdown("---")
     st.caption("Powered by Gemini + Scikit-learn")
 
@@ -164,7 +164,7 @@ elif page == "AI Advisor":
         if user_question:
             with st.spinner("Analyzing your finances..."):
                 try:
-                    model = genai.GenerativeModel('gemini-2.0-flash-lite')
+                    model = genai.GenerativeModel('gemini-2.0-flash')
                     prompt = f"""
 User monthly budget data (Indian salaried employee, monthly income 75000 rupees):
 {budget_summary}
